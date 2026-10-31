@@ -10,6 +10,6 @@ if ($LASTEXITCODE -ne 0) { throw "Build dependencies failed" }
 if ($LASTEXITCODE -ne 0) { throw "Source compilation failed" }
 & ".build-venv/Scripts/python.exe" -m unittest discover -s tests -q
 if ($LASTEXITCODE -ne 0) { throw "Tests failed" }
-& ".build-venv/Scripts/python.exe" -m PyInstaller --noconfirm --clean --onefile --windowed --name EtincellesTokenMeter --exclude-module gi --exclude-module cairo --exclude-module token_speedometer.gtk_gui launcher.py
+& ".build-venv/Scripts/python.exe" -m PyInstaller --noconfirm --clean --onefile --windowed --name EtincellesTokenMeter --icon token_speedometer/assets/etincelles.ico --add-data "token_speedometer/assets:token_speedometer/assets" --exclude-module gi --exclude-module cairo --exclude-module token_speedometer.gtk_gui launcher.py
 if ($LASTEXITCODE -ne 0) { throw "Executable build failed" }
 Write-Output "Built dist/EtincellesTokenMeter.exe"

@@ -1,8 +1,20 @@
 # Etincelles Token Meter
 
-A small desktop widget with **Read / prefill** and **Write / decode** speedometers and numeric tok/s readouts. Choose an engine endpoint and model; use the same widget with different models. Includes optional always-on-top, start at login, and a user-level uninstaller.
+A rounded, borderless desktop bubble in the official **Etincelles green, white and gold** palette, with **Read / prefill** and **Write / decode** speedometers and numeric tok/s readouts. Includes the supplied Etincelles logo, custom window controls, optional always-on-top, start at login, and a user-level uninstaller. Choose an engine endpoint and model; use the same widget with different models.
 
 The repository was created as AI-token-meter. The application's name is **Etincelles Token Meter**.
+
+![Etincelles Token Meter bubble appearance](docs/images/etincelles-bubble.png)
+
+*Appearance preview with illustrative readings; these numbers are not a benchmark.*
+
+## Official Etincelles appearance
+
+The palette is sampled from the supplied logo: green **#95C06D**, warm white **#FFFFFE**, and gold **#E1D753**. Darker green and gold text keeps the numbers readable on white. The original logo PNGs are included unchanged.
+
+Drag the logo or header to move the bubble. The custom header provides **Options (three dots)**, **Minimize**, and **Close**. There is no operating-system title bar around the main widget. Settings and confirmation dialogs open separately. Windows uses a native rounded window region; Linux uses an undecorated GTK window and rounded window shape.
+
+See [branding details](docs/BRANDING.md).
 
 ## Compatibility
 
@@ -49,7 +61,7 @@ From a checkout:
 
 Optional package installation: python -m pip install .; the command is etincelles-token-meter. The widget's user-level uninstaller removes its copied desktop installation. If installed with pip, also use python -m pip uninstall etincelles-token-meter to remove the Python package.
 
-Configuration is stored at %USERPROFILE%/.etincelles-token-meter on Windows and ~/.config/etincelles-token-meter on Linux. Linux source installation copies the application to ~/.local/share/etincelles-token-meter and creates application-menu entries. It keeps using the Python interpreter that performed installation.
+Configuration is stored at %USERPROFILE%/.etincelles-token-meter on Windows and ~/.config/etincelles-token-meter on Linux. Linux source installation copies the application to ~/.local/share/etincelles-token-meter and creates application-menu entries plus desktop shortcuts when a Desktop folder exists. It keeps using the Python interpreter that performed installation.
 
 ## Reading the dials
 

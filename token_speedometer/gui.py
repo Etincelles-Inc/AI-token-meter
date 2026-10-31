@@ -4,10 +4,12 @@ import time
 from . import __version__
 from .idle_display import IdleDisplay
 from .config import save_config
+from .bubble import BubbleWindow
+from .theme import WHITE, PANEL, MUTED, INK, GREEN, GOLD, TRACK, BORDER, READ_INK, WRITE_INK, asset, rounded_points
 from .install import NAME, install, uninstall, set_startup, shortcut_paths
 
-BG, PANEL, MUTED, TEXT = "#101923", "#162330", "#8ea3b5", "#edf5fa"
-READ, WRITE = "#73ccff", "#a5e443"
+BG, TEXT = WHITE, INK
+READ, WRITE = GREEN, GOLD
 
 def number(value):
     return "--" if value is None else f"{value:,.1f}"
@@ -32,24 +34,76 @@ def run(controller, proxy):
     except ImportError:
         from .gtk_gui import run as gtk_run
         return gtk_run(controller, proxy)
+    from tkinter import font as tkfont
     root = tk.Tk()
     root.title(NAME)
     root.configure(bg=BG)
     root.resizable(False, False)
     root.attributes("-topmost", bool(controller.get_config()["always_on_top"]))
-    frame = tk.Frame(root, bg=BG, padx=18, pady=14)
+    shell = BubbleWindow(root)
+    root.brand_icon = tk.PhotoImage(file=str(asset("etincelles-128.png")))
+    root.iconphoto(True, root.brand_icon)
+    root.brand_logo = tk.PhotoImage(file=str(asset("etincelles-64.png"))).subsample(2, 2)
+    def close_view():
+        config = controller.get_config()
+        if root.state() == "normal":
+            config.update(x=root.winfo_x(), y=root.winfo_y())
+            save_config(config)
+        root.destroy()
+    root.protocol("WM_DELETE_WINDOW", close_view)
+    root.bind("<Alt-F4>", lambda _event: close_view())
+    frame = tk.Frame(root, bg=BG, padx=24, pady=20)
     frame.pack()
     header = tk.Frame(frame, bg=BG)
     header.pack(fill="x")
-    tk.Label(header, text=NAME, bg=BG, fg=TEXT, font=("Segoe UI", 13, "bold")).pack(side="left")
-    menu_button = tk.Menubutton(header, text="Options", bg=PANEL, fg=TEXT, relief="flat",
-                               activebackground=PANEL, activeforeground=TEXT, padx=9, pady=4)
-    menu_button.pack(side="right")
-    menu = tk.Menu(menu_button, tearoff=False)
+    logo = tk.Label(header, image=root.brand_logo, bg=BG)
+    logo.pack(side="left", padx=(0, 10))
+    title_box = tk.Frame(header, bg=BG)
+    title_box.pack(side="left")
+    title = tk.Label(title_box, text=NAME, bg=BG, fg=TEXT, font=("Segoe UI", 13, "bold"))
+    title.pack(anchor="w")
+    subtitle = tk.Label(title_box, text="READ / WRITE SPEEDS", bg=BG, fg=MUTED, font=("Segoe UI", 8))
+    subtitle.pack(anchor="w")
+    for item in (header, logo, title_box, title, subtitle):
+        shell.bind_drag(item)
+    def header_button(text, action):
+        result = tk.Button(header, text=text, command=action, bg=BG, fg=MUTED,
+                           activebackground=PANEL, activeforeground=INK, relief="flat",
+                           borderwidth=0, padx=7, pady=2, font=("Segoe UI", 15),
+                           cursor="hand2", takefocus=True)
+        result.pack(side="right", padx=(3, 0))
+        return result
+    header_button("\u00d7", close_view)
+    header_button("\u2212", shell.minimize)
+    menu_button = tk.Menubutton(header, text="\u22ef", bg=BG, fg=MUTED, relief="flat",
+                               activebackground=PANEL, activeforeground=INK, padx=7, pady=2,
+                               font=("Segoe UI", 16), cursor="hand2", takefocus=True)
+    menu_button.pack(side="right", padx=(3, 0))
+    menu = tk.Menu(menu_button, tearoff=False, bg=BG, fg=INK, activebackground=PANEL,
+                   activeforeground=INK, borderwidth=0)
     menu_button["menu"] = menu
+    def pill_button(parent, text, command):
+        font = tkfont.Font(family="Segoe UI", size=10)
+        width = font.measure(text) + 28
+        button = tk.Canvas(parent, width=width, height=34, bg=BG, highlightthickness=0,
+                           cursor="hand2", takefocus=True)
+        shape = button.create_polygon(rounded_points(1, 1, width-2, 32, 16), smooth=True,
+                                       splinesteps=24, fill=PANEL, outline=PANEL)
+        button.create_text(width/2, 17, text=text, fill=INK, font=font)
+        def invoke(_event=None):
+            button.focus_set()
+            command()
+        button.bind("<Button-1>", invoke)
+        button.bind("<Return>", invoke)
+        button.bind("<space>", invoke)
+        button.bind("<Enter>", lambda _event: button.itemconfigure(shape, fill=BORDER))
+        button.bind("<Leave>", lambda _event: button.itemconfigure(shape, fill=PANEL))
+        button.bind("<FocusIn>", lambda _event: button.itemconfigure(shape, outline=GREEN))
+        button.bind("<FocusOut>", lambda _event: button.itemconfigure(shape, outline=PANEL))
+        return button
     engine = tk.StringVar(value="Connecting to engine...")
     model = tk.StringVar()
-    tk.Label(frame, textvariable=engine, bg=BG, fg=MUTED, anchor="w", font=("Segoe UI", 10)).pack(fill="x", pady=(10, 0))
+    tk.Label(frame, textvariable=engine, bg=BG, fg=MUTED, anchor="w", font=("Segoe UI", 9)).pack(fill="x", pady=(15, 0))
     tk.Label(frame, textvariable=model, bg=BG, fg=TEXT, anchor="w", wraplength=475, font=("Segoe UI", 10)).pack(fill="x")
     canvas = tk.Canvas(frame, width=490, height=218, bg=BG, highlightthickness=0)
     canvas.pack(pady=(8, 0))
@@ -62,7 +116,7 @@ def run(controller, proxy):
         root.clipboard_clear()
         root.clipboard_append(f"http://127.0.0.1:{proxy.port}")
         status.set("Capture URL copied. Use it in place of your engine's base URL.")
-    tk.Button(controls, text="Copy capture URL", command=copied, bg=PANEL, fg=TEXT, relief="flat", padx=10, pady=5).pack(side="right")
+    pill_button(controls, "Copy capture URL", copied).pack(side="right")
     def settings():
         dialog = tk.Toplevel(root)
         dialog.title("Engine / model")
@@ -95,7 +149,7 @@ def run(controller, proxy):
             except Exception as exc:
                 messagebox.showerror(NAME, str(exc), parent=dialog)
         tk.Button(dialog, text="Save", command=apply, padx=20).grid(row=11, column=0, pady=(0, 16), sticky="e", padx=16)
-    tk.Button(controls, text="Engine / model", command=settings, bg=PANEL, fg=TEXT, relief="flat", padx=10, pady=5).pack(side="left")
+    pill_button(controls, "Engine / model", settings).pack(side="left")
     def guarded(action):
         try:
             action()
@@ -121,7 +175,7 @@ def run(controller, proxy):
         "Polling time is never the speed denominator.\nHeld readings show their age. Multiple requests are time weighted.\n"
         "Ollama reports timing at completion; it cannot give a continuous native live rate.\n"
         "This tool does not log prompts, responses or API keys.", parent=root))
-    menu.add_command(label="Quit", command=root.destroy)
+    menu.add_command(label="Quit", command=close_view)
     idle_display = IdleDisplay()
     limits = {"read": 5000, "write": 100}
     def draw_dial(x, label, item, color, key):
@@ -129,9 +183,9 @@ def run(controller, proxy):
         limits[key] = limit(rate, limits[key])
         maximum = limits[key]
         cx, cy, radius = x + 115, 112, 84
-        canvas.create_text(cx, 10, text=label.upper(), fill=color, font=("Segoe UI", 10, "bold"))
+        canvas.create_text(cx, 10, text=label.upper(), fill=READ_INK if key == "read" else WRITE_INK, font=("Segoe UI", 10, "bold"))
         canvas.create_arc(cx-radius, cy-radius, cx+radius, cy+radius, start=0, extent=180,
-                          style="arc", outline="#2c4050", width=12)
+                          style="arc", outline=TRACK, width=12)
         if rate is not None:
             fraction = min(1, rate / maximum)
             canvas.create_arc(cx-radius, cy-radius, cx+radius, cy+radius, start=180 - 180 * fraction,
@@ -143,7 +197,7 @@ def run(controller, proxy):
             tx, ty = cx + math.cos(angle) * 103, cy - math.sin(angle) * 58
             canvas.create_text(tx, ty + (12 if angle != math.pi / 2 else 0), text=f"{value/1000:g}k" if value >= 1000 else f"{value:g}",
                                fill=MUTED, font=("Segoe UI", 8))
-        canvas.create_text(cx, 157, text=number(rate), fill=color, font=("Consolas", 25, "bold"))
+        canvas.create_text(cx, 157, text=number(rate), fill=READ_INK if key == "read" else WRITE_INK, font=("Consolas", 25, "bold"))
         canvas.create_text(cx, 184, text="tok/s", fill=MUTED, font=("Segoe UI", 10))
         canvas.create_text(cx, 207, text=age(item), fill=MUTED, font=("Segoe UI", 8), width=235)
     def refresh():
@@ -159,4 +213,5 @@ def run(controller, proxy):
         status.set(text)
         root.after(250, refresh)
     refresh()
+    shell.show(controller.get_config())
     root.mainloop()
