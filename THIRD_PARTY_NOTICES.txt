@@ -1,0 +1,9 @@
+Etincelles Token Meter source is MIT licensed; see LICENSE.
+
+The standalone Windows executable bundles Python 3.13.5, Tcl/Tk 8.6 and a PyInstaller 6.22.3 bootloader.
+Their notices are reproduced in THIRD_PARTY/. These third-party components keep their respective licenses.
+PyInstaller includes an exception permitting applications built with it to be distributed under the application license.
+
+Python: https://www.python.org/
+Tcl/Tk: https://www.tcl-lang.org/
+PyInstaller: https://pyinstaller.org/en/stable/license.html

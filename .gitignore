@@ -218,3 +218,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local build environment and private validation
+.build-venv/
+.evidence-private/
+config.json
+config.tmp
+*.key
+*.pem
+*.pfx
+*.zip
+*.exe

@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "etincelles-token-meter"
+version = "0.1.0"
+description = "Desktop Read / Write token speedometers using inference-engine timing"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Etincelles-Inc"}]
+dependencies = []
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Topic :: System :: Monitoring"
+]
+
+[project.scripts]
+etincelles-token-meter = "token_speedometer.cli:main"
+
+[project.urls]
+Repository = "https://github.com/Etincelles-Inc/AI-token-meter"
+
+[tool.setuptools.packages.find]
+include = ["token_speedometer*"]
