@@ -4,13 +4,14 @@ Etincelles Token Meter 0.2.0 - official Etincelles bubble.
 
 | Check | Result |
 | --- | --- |
-| Windows 11 x64 / Python 3.13.5 | 44 automated tests passed; all application modules compile |
-| Spark Ubuntu / Arm64 / Python 3.12 | 44 automated tests passed; all application modules compile |
+| Windows 11 x64 / Python 3.13.5 | 47 automated tests passed; all application modules compile |
+| Spark Ubuntu / Arm64 / Python 3.12 | 47 automated tests passed; all application modules compile |
 | Windows source and standalone GUI | Official logo, rounded native window region, header dragging, minimize/restore, Options and settings checked |
 | Linux GTK 3 GUI | Official logo, native rounded window shape, undecorated window and five-second idle readout rendered against live vLLM |
 | Python wheel | All official logo assets match source PNG/ICO checksums; embedded Python source compiles |
 | Source installer and uninstaller | Actual Linux test under a temporary home passed; copied logo files removed and unrelated file preserved |
 | Windows standalone installer | Shortcut ownership, startup toggle, uninstall and unrelated-file retention passed; user settings restored |
+| Native Windows frame | Repeated unchanged geometry notifications reuse the rounded region; resize and recreated-window handles have regression coverage |
 | Five-second idle policy | Existing regression coverage retained; active delayed requests are not mistaken for idle |
 
 The logo's supplied PNGs are preserved byte-for-byte; the ICO wraps supplied 32-256 pixel PNGs without changing image pixels. Palette values and window behavior are described in BRANDING.md.

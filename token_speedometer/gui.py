@@ -200,17 +200,25 @@ def run(controller, proxy):
         canvas.create_text(cx, 157, text=number(rate), fill=READ_INK if key == "read" else WRITE_INK, font=("Consolas", 25, "bold"))
         canvas.create_text(cx, 184, text="tok/s", fill=MUTED, font=("Segoe UI", 10))
         canvas.create_text(cx, 207, text=age(item), fill=MUTED, font=("Segoe UI", 8), width=235)
+    last_dials = None
+    def set_text(variable, text):
+        if variable.get() != text:
+            variable.set(text)
     def refresh():
+        nonlocal last_dials
         value = idle_display.apply(time.monotonic(), controller.snapshot())
-        canvas.delete("all")
-        draw_dial(0, "Read / prefill", value["read"], READ, "read")
-        draw_dial(250, "Write / decode", value["write"], WRITE, "write")
-        engine.set((value["engine"] or "Engine") + ("  /  Connected" if value["online"] else "  /  Waiting"))
-        model.set(value["model"] or "Choose a model or use automatic selection")
+        dials = tuple((value[key].get("rate"), age(value[key])) for key in ("read", "write"))
+        if dials != last_dials:
+            canvas.delete("all")
+            draw_dial(0, "Read / prefill", value["read"], READ, "read")
+            draw_dial(250, "Write / decode", value["write"], WRITE, "write")
+            last_dials = dials
+        set_text(engine, (value["engine"] or "Engine") + ("  /  Connected" if value["online"] else "  /  Waiting"))
+        set_text(model, value["model"] or "Choose a model or use automatic selection")
         text = value.get("message") or f"Active {value.get('active', 0)}   Queued {value.get('queued', 0)}"
         if value.get("cache") is not None:
             text += f"   KV cache {value['cache'] * 100:.1f}%"
-        status.set(text)
+        set_text(status, text)
         root.after(250, refresh)
     refresh()
     shell.show(controller.get_config())

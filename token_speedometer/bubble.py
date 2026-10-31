@@ -8,6 +8,8 @@ class BubbleWindow:
         self.minimized = False
         self.pending = None
         self.native = None
+        self.shaped = None
+        self.styled = None
         root.withdraw()
         root.overrideredirect(True)
         root.bind("<Configure>", self._configure, add="+")
@@ -41,14 +43,24 @@ class BubbleWindow:
             return
         ctypes, wintypes, user, gdi = self.native
         hwnd = self._hwnd()
-        style = user.GetWindowLongPtrW(hwnd, -20)
-        user.SetWindowLongPtrW(hwnd, -20, (style & ~0x80) | 0x40000)
         rect = wintypes.RECT()
         if user.GetWindowRect(hwnd, ctypes.byref(rect)):
+            shape = (hwnd, rect.right-rect.left, rect.bottom-rect.top)
+            if shape == self.shaped and self.styled == hwnd:
+                return
+            if self.styled != hwnd:
+                style = user.GetWindowLongPtrW(hwnd, -20)
+                desired = (style & ~0x80) | 0x40000
+                if style != desired:
+                    user.SetWindowLongPtrW(hwnd, -20, desired)
+                self.styled = hwnd
             region = gdi.CreateRoundRectRgn(0, 0, rect.right-rect.left+1, rect.bottom-rect.top+1,
                                            RADIUS*2, RADIUS*2)
-            if region and not user.SetWindowRgn(hwnd, region, True):
-                gdi.DeleteObject(region)
+            if region:
+                if user.SetWindowRgn(hwnd, region, True):
+                    self.shaped = shape
+                else:
+                    gdi.DeleteObject(region)
             # Windows owns a region after a successful SetWindowRgn call.
 
     def _configure(self, event):
