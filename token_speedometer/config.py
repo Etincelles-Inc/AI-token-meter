@@ -20,7 +20,7 @@ def validate_url(value):
     return value.rstrip("/")
 
 DEFAULTS = {"backend": "auto", "upstream": "http://127.0.0.1:8000", "model": "",
-            "proxy_port": 18630, "always_on_top": True, "auth_env": ""}
+            "proxy_port": 18630, "always_on_top": True, "auth_env": "", "appearance": "system"}
 
 def load_config():
     result = dict(DEFAULTS)
@@ -33,6 +33,8 @@ def validate_config(value):
     result = {**DEFAULTS, **value}
     if result["backend"] not in ("auto", "vllm", "llamacpp", "ollama", "native"):
         raise ValueError("Unknown engine adapter.")
+    if result["appearance"] not in ("system", "light", "dark"):
+        raise ValueError("Appearance must be system, light or dark.")
     result["upstream"] = validate_url(result["upstream"])
     result["proxy_port"] = int(result["proxy_port"])
     if not 1024 <= result["proxy_port"] <= 65535:

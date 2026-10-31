@@ -21,6 +21,11 @@ class Controller:
             self.store.clear()
             self.revision += 1
             self.value = empty()
+    def update_view_settings(self, **settings):
+        if not set(settings).issubset({"appearance", "always_on_top", "x", "y"}):
+            raise ValueError("Only view settings can be updated without resetting timing.")
+        with self.lock:
+            self.config.update(settings)
     def snapshot(self):
         with self.lock: return copy.deepcopy(self.value)
     def start(self): self.thread.start()

@@ -14,6 +14,14 @@ The palette is sampled from the supplied logo: green **#95C06D**, warm white **#
 
 Drag the logo or header to move the bubble. The custom header provides **Options (three dots)**, **Minimize**, and **Close**. There is no operating-system title bar around the main widget. Settings and confirmation dialogs open separately. Windows uses a native rounded window region; Linux uses an undecorated GTK window and rounded window shape.
 
+**Automatic appearance:** the widget follows the desktop by default and updates within about two seconds. On Windows it follows the default app color mode; on Linux it uses the desktop appearance portal, GNOME preference, or GTK theme fallback. It reads preferences without changing desktop settings.
+
+Use **Options > Appearance > Follow desktop / Light / Dark (neon)** to override it. Dark mode uses neon green **#A8FF4F** and neon gold **#FFE44D**, with subtle meter glows. Light mode keeps the original official palette; the supplied logo is unchanged. Theme changes preserve current measurements and capture history.
+
+![Neon dark appearance](docs/images/etincelles-dark.png)
+
+*Appearance preview with illustrative readings, not a benchmark.*
+
 See [branding details](docs/BRANDING.md).
 
 ## Compatibility

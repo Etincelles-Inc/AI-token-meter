@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "etincelles-token-meter"
-version = "0.2.0"
+version = "0.3.0"
 description = "Desktop Read / Write token speedometers using inference-engine timing"
 readme = "README.md"
 requires-python = ">=3.10"

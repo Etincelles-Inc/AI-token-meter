@@ -7,11 +7,20 @@ from gi.repository import Gtk, GLib, Gdk, GdkPixbuf
 import cairo
 from .idle_display import IdleDisplay
 from .config import save_config, validate_config
+from .appearance import desktop_reader, resolved_mode
+from .theme import palette
 from .theme import WHITE, PANEL, MUTED, INK, GREEN, GOLD, TRACK, BORDER, READ_INK, WRITE_INK, RADIUS, asset
 from .gui import number, limit, age
 from .install import NAME, install, uninstall, set_startup, shortcut_paths
 
 def run(controller, proxy):
+    preference = controller.get_config().get("appearance", "system")
+    reader = desktop_reader(Gtk.Settings.get_default())
+    theme_mode = resolved_mode(preference, reader)
+    colors = palette(theme_mode)
+    WHITE, PANEL, MUTED, INK, GREEN, GOLD, TRACK, BORDER, READ_INK, WRITE_INK = (
+        colors["bg"], colors["panel"], colors["muted"], colors["text"], colors["read"],
+        colors["write"], colors["track"], colors["border"], colors["read_text"], colors["write_text"])
     window = Gtk.Window(title=NAME)
     window.set_resizable(False)
     window.set_keep_above(bool(controller.get_config()["always_on_top"]))
@@ -24,21 +33,29 @@ def run(controller, proxy):
     window.set_icon_from_file(str(asset("etincelles-128.png")))
     window.get_style_context().add_class("etincelles-bubble")
     css = Gtk.CssProvider()
-    css.load_from_data(("""
-        window.etincelles-bubble { background: transparent; color: %s; }
-        .etincelles-bubble box, .etincelles-bubble eventbox { background: transparent; }
-        .etincelles-bubble label { color: %s; }
-        .etincelles-bubble .muted { color: %s; font-size: 11px; }
-        .etincelles-bubble button { background: %s; color: %s; border: none;
-            border-radius: 17px; box-shadow: none; text-shadow: none; padding: 7px 14px; }
-        .etincelles-bubble button:hover { background: %s; }
-        .etincelles-bubble .chrome { background: transparent; color: %s;
-            min-width: 22px; min-height: 22px; padding: 3px; }
-        .etincelles-bubble .brand-title { font-size: 15px; font-weight: bold; }
-        .etincelles-bubble .brand-caption { color: %s; font-size: 9px; }
-        menu { background: %s; color: %s; }
-        menuitem label { color: %s; }
-    """ % (INK, INK, MUTED, PANEL, INK, BORDER, MUTED, MUTED, WHITE, INK, INK)).encode())
+    def install_css():
+        definitions = "\n".join("@define-color et_" + key + " " + value + ";" for key, value in colors.items())
+        rules = """
+            window.etincelles-bubble { background: transparent; color: @et_text; }
+            .etincelles-bubble box, .etincelles-bubble eventbox { background: transparent; }
+            .etincelles-bubble label, .etincelles-dialog label { color: @et_text; }
+            .etincelles-bubble .muted { color: @et_muted; font-size: 11px; }
+            .etincelles-bubble button, .etincelles-dialog button {
+                background: @et_panel; color: @et_text; border: none; border-radius: 17px;
+                box-shadow: none; text-shadow: none; padding: 7px 14px; }
+            .etincelles-bubble button:hover, .etincelles-dialog button:hover { background: @et_border; }
+            .etincelles-bubble .chrome { background: transparent; color: @et_muted;
+                min-width: 22px; min-height: 22px; padding: 3px; }
+            .etincelles-bubble .brand-title { font-size: 15px; font-weight: bold; }
+            .etincelles-bubble .brand-caption { color: @et_muted; font-size: 9px; }
+            window.etincelles-dialog { background: @et_bg; color: @et_text; }
+            .etincelles-dialog entry { background: @et_panel; color: @et_text; caret-color: @et_text; }
+            menu { background: @et_bg; color: @et_text; }
+            menuitem label { color: @et_text; }
+            menuitem:hover { background: @et_panel; }
+        """
+        css.load_from_data((definitions + rules).encode())
+    install_css()
     Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
     def css_class(widget, name):
         widget.get_style_context().add_class(name)
@@ -132,8 +149,8 @@ def run(controller, proxy):
     current = controller.snapshot()
     def color(ctx, hex_color):
         ctx.set_source_rgb(*[int(hex_color[i:i+2], 16) / 255 for i in (1, 3, 5)])
-    def text(ctx, x, y, value, size=12, tint=MUTED, bold=False):
-        color(ctx, tint)
+    def text(ctx, x, y, value, size=12, tint=None, bold=False):
+        color(ctx, tint or MUTED)
         ctx.select_font_face("Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD if bold else cairo.FONT_WEIGHT_NORMAL)
         ctx.set_font_size(size)
         ext = ctx.text_extents(value)
@@ -156,11 +173,26 @@ def run(controller, proxy):
             ctx.stroke()
             if rate is not None:
                 fraction = min(1, rate / maximum)
+                if theme_mode == "dark":
+                    glow = colors["read_glow"] if key == "read" else colors["write_glow"]
+                    color(ctx, glow)
+                    ctx.set_line_width(20)
+                    ctx.new_path()
+                    ctx.arc(x,112,84,math.pi,math.pi+fraction*math.pi)
+                    ctx.stroke()
                 color(ctx, tint)
+                ctx.set_line_width(12)
                 ctx.new_path()
                 ctx.arc(x, 112, 84, math.pi, math.pi + fraction * math.pi)
                 ctx.stroke()
                 angle = math.pi * (1 - fraction)
+                if theme_mode == "dark":
+                    color(ctx, glow)
+                    ctx.set_line_width(7)
+                    ctx.move_to(x,112)
+                    ctx.line_to(x+math.cos(angle)*66,112-math.sin(angle)*66)
+                    ctx.stroke()
+                color(ctx, tint)
                 ctx.set_line_width(3)
                 ctx.move_to(x, 112)
                 ctx.line_to(x + math.cos(angle) * 66, 112 - math.sin(angle) * 66)
@@ -170,7 +202,7 @@ def run(controller, proxy):
             ctx.arc(x, 112, 5, 0, 2*math.pi)
             ctx.fill()
             text(ctx, x-103, 136, "0", 9)
-            text(ctx, x, 35, f"{maximum/2:g}", 9)
+            text(ctx, x, 52, f"{maximum/2:g}", 9)
             text(ctx, x+103, 136, f"{maximum:g}", 9)
             text(ctx, x, 169, number(rate), 30, number_color, True)
             text(ctx, x, 190, "tok/s", 12)
@@ -181,6 +213,7 @@ def run(controller, proxy):
         dialog = Gtk.MessageDialog(transient_for=window, modal=True,
             message_type=Gtk.MessageType.ERROR if error else Gtk.MessageType.INFO,
             buttons=Gtk.ButtonsType.OK, text=NAME)
+        css_class(dialog,"etincelles-dialog")
         dialog.format_secondary_text(content)
         dialog.run()
         dialog.destroy()
@@ -192,6 +225,7 @@ def run(controller, proxy):
     def settings(*_):
         config = controller.get_config()
         dialog = Gtk.Dialog(title="Engine / model", transient_for=window, modal=True)
+        css_class(dialog,"etincelles-dialog")
         dialog.add_buttons("Cancel", Gtk.ResponseType.CANCEL, "Save", Gtk.ResponseType.OK)
         content = dialog.get_content_area()
         content.set_border_width(16)
@@ -231,9 +265,28 @@ def run(controller, proxy):
         value = {**controller.get_config(), "always_on_top": item.get_active()}
         save_config(value)
         window.set_keep_above(item.get_active())
-        controller.configure(value)
+        controller.update_view_settings(always_on_top=item.get_active())
     above.connect("toggled", lambda item: guarded(lambda: change_above(item)))
     menu.append(above)
+    appearance_item = Gtk.MenuItem(label="Appearance")
+    appearance_menu = Gtk.Menu()
+    appearance_item.set_submenu(appearance_menu)
+    group = None
+    def choose_appearance(item, choice):
+        nonlocal preference
+        if item.get_active():
+            preference = choice
+            save_config({**controller.get_config(), "appearance": choice})
+            controller.update_view_settings(appearance=choice)
+            apply_appearance()
+    for label, choice in [("Follow desktop", "system"), ("Light", "light"), ("Dark (neon)", "dark")]:
+        item = Gtk.RadioMenuItem.new_with_label_from_widget(group, label)
+        if group is None:
+            group = item
+        item.set_active(preference == choice)
+        item.connect("toggled", choose_appearance, choice)
+        appearance_menu.append(item)
+    menu.append(appearance_item)
     startup = Gtk.CheckMenuItem(label="Start at login")
     startup.set_active(shortcut_paths()[-1].exists())
     startup.connect("toggled", lambda item: guarded(lambda: set_startup(item.get_active())))
@@ -246,6 +299,7 @@ def run(controller, proxy):
     def remove():
         dialog = Gtk.MessageDialog(transient_for=window, modal=True, message_type=Gtk.MessageType.QUESTION,
             buttons=Gtk.ButtonsType.OK_CANCEL, text="Uninstall " + NAME + "?")
+        css_class(dialog,"etincelles-dialog")
         dialog.format_secondary_text("Remove the widget, its settings and its shortcuts?")
         result = dialog.run()
         dialog.destroy()
@@ -256,6 +310,21 @@ def run(controller, proxy):
     entry("About readings", lambda: message("Read / Write use engine timing, never polling duration.\nHeld readings show their age.\nOllama updates native timing at completion.\nNo prompts, responses or keys are logged."))
     entry("Quit", window.destroy)
     menu.show_all()
+    def apply_appearance():
+        nonlocal theme_mode, colors, WHITE, PANEL, MUTED, INK, GREEN, GOLD, TRACK, BORDER, READ_INK, WRITE_INK
+        mode = resolved_mode(preference, reader)
+        if mode != theme_mode:
+            theme_mode, colors = mode, palette(mode)
+            WHITE, PANEL, MUTED, INK, GREEN, GOLD, TRACK, BORDER, READ_INK, WRITE_INK = (
+                colors["bg"], colors["panel"], colors["muted"], colors["text"], colors["read"],
+                colors["write"], colors["track"], colors["border"], colors["read_text"], colors["write_text"])
+            install_css()
+            window.queue_draw()
+            area.queue_draw()
+        return True
+    Gtk.Settings.get_default().connect("notify::gtk-theme-name", lambda *_: apply_appearance())
+    Gtk.Settings.get_default().connect("notify::gtk-application-prefer-dark-theme", lambda *_: apply_appearance())
+    GLib.timeout_add(2000, apply_appearance)
     def refresh():
         nonlocal current
         current = idle_display.apply(time.monotonic(), controller.snapshot())

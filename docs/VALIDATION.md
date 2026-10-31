@@ -1,31 +1,16 @@
 # Release validation - 2026-10-31
 
-Etincelles Token Meter 0.2.0 - official Etincelles bubble.
+Etincelles Token Meter 0.3.0 - automatic neon dark mode.
 
-| Check | Result |
-| --- | --- |
-| Windows 11 x64 / Python 3.13.5 | 47 automated tests passed; all application modules compile |
-| Spark Ubuntu / Arm64 / Python 3.12 | 47 automated tests passed; all application modules compile |
-| Windows source and standalone GUI | Official logo, rounded native window region, header dragging, minimize/restore, Options and settings checked |
-| Linux GTK 3 GUI | Official logo, native rounded window shape, undecorated window and five-second idle readout rendered against live vLLM |
-| Python wheel | All official logo assets match source PNG/ICO checksums; embedded Python source compiles |
-| Source installer and uninstaller | Actual Linux test under a temporary home passed; copied logo files removed and unrelated file preserved |
-| Windows standalone installer | Shortcut ownership, startup toggle, uninstall and unrelated-file retention passed; user settings restored |
-| Native Windows frame | Repeated unchanged geometry notifications reuse the rounded region; resize and recreated-window handles have regression coverage |
-| Five-second idle policy | Existing regression coverage retained; active delayed requests are not mistaken for idle |
+- 59 tests passed on Windows 11 / Python 3.13.5 and Spark Ubuntu / Arm64 / Python 3.12.
+- All application modules compile. Existing timing, idle, proxy, installer and native-window regression coverage is retained.
+- Windows preference detection covers app-versus-shell priority, missing values and invalid registry types. App appearance has priority in Windows custom color mode.
+- Linux detection covers standardized portal values, GNOME color-scheme and GTK fallback behavior.
+- Following the desktop, explicit light/dark overrides and changing appearance without clearing timing/capture state have regression coverage.
+- Actual Windows and Spark desktop preferences both reported dark mode. Source and standalone Windows previews selected the neon theme automatically.
+- Windows appearance menu switching was checked. The Spark GUI was exercised through injected dark/light/dark desktop-preference changes in one running process; desktop settings were not changed.
+- Light mode retains the original logo-derived palette. Dark mode uses neon green #A8FF4F and neon gold #FFE44D, with static glow accents and the original unchanged logo.
 
-The logo's supplied PNGs are preserved byte-for-byte; the ICO wraps supplied 32-256 pixel PNGs without changing image pixels. Palette values and window behavior are described in BRANDING.md.
+Native inference measurement math is unchanged from 0.2.0, whose actual RTX 4090/Ollama and Spark/vLLM checks matched engine timing. This appearance update does not claim a new performance benchmark. Example images use clearly labeled illustrative readings.
 
-## RTX 4090 integration
-
-An already downloaded Qwen2.5-Coder 7B Instruct Q4_K_M ran through Ollama 0.40.13 and the branded widget's capture proxy. Native measurement math is unchanged from the previous release.
-
-- Prompt: 2,130 tokens / 0.267524000 native seconds = 7961.902484 Read tok/s.
-- Output: 256 tokens / 1.741270000 native seconds = 147.019130 Write tok/s.
-- Ollama reported 4,928,516,914 bytes in VRAM out of 4,928,516,914 loaded-model bytes.
-- Both captured rates matched native count/duration ratios within 1e-8 tok/s.
-- This is a functional integration check, not an isolated benchmark or a performance promise. Cache state, prompt size and engine accounting affect rates.
-
-The existing adapters remain: vLLM was checked live on the Spark; Ollama was checked live on the RTX 4090. llama.cpp and custom hooks have native-format fixture coverage; no new live llama.cpp integration is claimed.
-
-The GitHub Actions matrix checks Windows and Ubuntu with Python 3.10 and 3.13. Current run results are available in the repository's Actions tab. Private test evidence, local settings and build environments are excluded from the public source.
+GitHub Actions checks Windows and Ubuntu with Python 3.10 and 3.13. Current remote results are available in the repository's Actions tab. Private settings and validation evidence are excluded from the public source.
