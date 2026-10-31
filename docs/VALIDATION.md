@@ -1,6 +1,6 @@
 # Release validation - 2026-10-31
 
-Etincelles Token Meter 0.1.0.
+Etincelles Token Meter 0.1.1.
 
 | Check | Result |
 | --- | --- |
@@ -29,3 +29,5 @@ Used an already downloaded Qwen2.5-Coder 7B Instruct Q4_K_M through Ollama 0.40.
 The initial GitHub README, MIT license and Python ignore template were retained in repository history. Private configuration, local test evidence, machine paths, API keys, model weights and build environments are excluded from the public repository. Tests use synthetic fixtures.
 
 The GitHub Actions matrix is configured for Windows and Ubuntu with Python 3.10 and 3.13; remote CI execution is separate from local validation and is not claimed here until GitHub runs it.
+
+Patch 0.1.1 corrects a Linux GTK refresh indentation error introduced in the idle update. Syntax compilation and a fresh Linux GUI check are included in patch validation. Windows timing and the separately installed Spark widget were unaffected.

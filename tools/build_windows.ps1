@@ -6,6 +6,8 @@ if (-not (Test-Path -LiteralPath ".build-venv/Scripts/python.exe")) {
 }
 & ".build-venv/Scripts/python.exe" -m pip install -r tools/build-requirements.txt
 if ($LASTEXITCODE -ne 0) { throw "Build dependencies failed" }
+& ".build-venv/Scripts/python.exe" -m compileall -q token_speedometer
+if ($LASTEXITCODE -ne 0) { throw "Source compilation failed" }
 & ".build-venv/Scripts/python.exe" -m unittest discover -s tests -q
 if ($LASTEXITCODE -ne 0) { throw "Tests failed" }
 & ".build-venv/Scripts/python.exe" -m PyInstaller --noconfirm --clean --onefile --windowed --name EtincellesTokenMeter --exclude-module gi --exclude-module cairo --exclude-module token_speedometer.gtk_gui launcher.py

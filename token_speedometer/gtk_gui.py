@@ -168,8 +168,7 @@ def run(controller, proxy):
     menu.show_all()
     def refresh():
         nonlocal current
-        idle_display = IdleDisplay()
-    current = controller.snapshot()
+        current = idle_display.apply(time.monotonic(), controller.snapshot())
         info.set_text((current["engine"] or "Engine") + " / " + (current["model"] or "Automatic model"))
         status.set_text(current.get("message") or f"Active {current.get('active', 0)}   Queued {current.get('queued', 0)}")
         area.queue_draw()
